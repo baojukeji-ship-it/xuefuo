@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>释迦牟尼佛传 · 弹出目录</title>
+    <style>
+        /* ===== 基础 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', '宋体', 'SimSun', 'PingFang SC', 'Hiragino Sans GB', serif;
+            background: #faf4e7;
+            color: #2e241f;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* ===== 主容器 ===== */
+        .main-wrapper {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 253, 245, 0.9);
+            backdrop-filter: blur(2px);
+            box-shadow: 0 10px 30px -10px rgba(80, 60, 30, 0.3), 0 0 0 1px #d9cbae inset;
+            border-radius: 32px;
+            padding: 18px 15px 20px;
+            position: relative;
+        }
+
+        /* 标题区域 + 目录按钮 */
+        .header-area {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #c9ad7e;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            letter-spacing: 3px;
+            color: #4f3a2b;
+            font-weight: 400;
+            text-shadow: 1px 1px 0 #ede3d0;
+            line-height: 1.2;
+        }
+
+        /* 目录按钮 (圆形) */
+        .menu-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: #c7a66f;
+            border: 2px solid #8f6f48;
+            color: white;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 0 #5d401f, 0 6px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: 0.08s;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .menu-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #5d401f, 0 6px 10px rgba(0,0,0,0.1);
+        }
+
+        /* ----- 弹出目录遮罩 (默认隐藏) ----- */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.25s ease, visibility 0s 0.25s;
+            padding: 20px;
+        }
+
+        .drawer-overlay.show {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.25s ease, visibility 0s 0s;
+        }
+
+        /* 弹出卡片 (居中) */
+        .drawer-card {
+            background: #faf3e2;
+            width: 90%;
+            max-width: 340px;
+            max-height: 80vh;
+            border-radius: 48px;
+            padding: 28px 16px 24px;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.5), 0 0 0 2px #e3cfb3 inset;
+            border: 1px solid #b39264;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer-card h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            color: #4f3a2b;
+            font-weight: 350;
+            border-bottom: 2px dashed #b0966b;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* 关闭按钮 (小叉) */
+        .close-drawer {
+            position: absolute;
+            top: 18px;
+            right: 22px;
+            font-size: 2.2rem;
+            line-height: 1;
+            color: #7a5d3b;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #e6d7bb;
+            border: 1px solid #b39264;
+            box-shadow: 0 3px 0 #8f734c;
+            transition: 0.05s;
+        }
+
+        .close-drawer:active {
+            transform: translateY(3px);
+            box-shadow: 0 0px 0 #8f734c;
+        }
+
+        /* 目录网格 (弹出层内) */
+        .drawer-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 5px 5px 10px;
+            max-height: 55vh;
+            scrollbar-width: thin;
+        }
+
+        .drawer-grid::-webkit-scrollbar {
+            width: 5px;
+            background: #eedbc0;
+            border-radius: 10px;
+        }
+        .drawer-grid::-webkit-scrollbar-thumb {
+            background: #aa8a62;
+            border-radius: 10px;
+        }
+
+        .chapter-btn {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: #e6d7bb;
+            border: 2px solid #b39264;
+            color: #3b2e1e;
+            font-size: 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8f734c, 0 4px 8px rgba(0,0,0,0.1);
+            transition: 0.05s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .chapter-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #8f734c, 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .chapter-btn.active-chapter {
+            background: #c7a66f;
+            border-color: #6f4f2b;
+            color: white;
+            box-shadow: 0 3px 0 #5a3f20, 0 4px 8px #a57c4e;
+        }
+
+        /* ----- 阅读区 (现在独占整个下方) ----- */
+        .reader-panel {
+            background: #fffbf0;
+            border-radius: 28px;
+            padding: 18px 16px;
+            box-shadow: inset 0 0 0 1px #faf1df, inset 0 0 15px #ffeecc, 0 10px 20px -8px #907e63;
+            border: 1px solid #dac29c;
+        }
+
+        .audio-area {
+            background: #e6d5bb;
+            padding: 12px 12px;
+            border-radius: 40px;
+            margin-bottom: 18px;
+            box-shadow: inset 0 1px 5px #fef7e6, inset 0 -2px 5px #baa07e, 0 4px 8px rgba(150, 120, 70, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #audio {
+            width: 100%;
+            height: 44px;
+            border-radius: 40px;
+            background: #f7efde;
+        }
+
+        .audio-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .audio-controls button {
+            background: #8f6f48;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            padding: 8px 20px;
+            border-radius: 40px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #5d401f, 0 3px 6px #b19673;
+            transition: 0.05s;
+            font-weight: 400;
+            border: 1px solid #ebd9b5;
+            flex: 0 1 auto;
+            min-width: 110px;
+        }
+
+        .audio-controls button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #5d401f, 0 3px 6px #b19673;
+        }
+
+        .chapter-title {
+            font-size: 1.7rem;
+            color: #442f1f;
+            border-left: 8px solid #b38d5a;
+            padding-left: 16px;
+            margin-bottom: 16px;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        .chapter-content {
+            font-size: 1.1rem;
+            text-align: justify;
+            word-break: break-word;
+            white-space: pre-wrap;
+            background: #fffdf7;
+            padding: 18px 14px;
+            border-radius: 24px;
+            box-shadow: inset 0 0 10px #fff2d7;
+            border: 1px solid #ead8bc;
+            max-height: 58vh;
+            overflow-y: auto;
+            line-height: 1.8;
+            color: #2f241a;
+            scrollbar-width: thin;
+        }
+
+        .chapter-content br {
+            display: block;
+            content: "";
+            margin-top: 0.5em;
+        }
+
+        .foot-note {
+            margin-top: 16px;
+            text-align: right;
+            color: #7d6954;
+            font-style: italic;
+            border-top: 1px dotted #cbb594;
+            padding-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 30px;
+            color: #8f6f48;
+            font-style: italic;
+        }
+
+        /* 小屏适配 */
+        @media (max-width: 380px) {
+            .menu-btn { width: 48px; height: 48px; font-size: 1.2rem; }
+            h1 { font-size: 1.5rem; }
+            .chapter-btn { width: 50px; height: 50px; font-size: 1rem; }
+            .audio-controls { gap: 8px; }
+            .audio-controls button { min-width: 90px; padding: 8px 6px; }
+        }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- 头部：标题 + 目录按钮 -->
+    <div class="header-area">
+        <h1>📖 释迦牟尼佛传</h1>
+        <div class="menu-btn" id="menuBtn">📋</div>
+    </div>
+
+    <!-- 阅读区 (不再有目录，完全释放空间) -->
+    <div class="reader-panel">
+        <div class="audio-area">
+            <audio id="audio" controls autoplay style="width:100%;"></audio>
+            <div class="audio-controls">
+                <button id="prevBtn">◀ 上一章</button>
+                <button id="nextBtn">下一章 ▶</button>
+            </div>
+        </div>
+
+        <div class="chapter-title" id="chapterDisplayTitle">第一章 序说</div>
+        <div class="chapter-content" id="chapterContent">
+            <div class="loading-indicator">📄 加载第一章...</div>
+        </div>
+        <div class="foot-note">—— 点击右上角 📋 选章 ——
+        <br>
+        <a href="http://xuefuo.cu.ma/apk/nianfo.apk">下载apk应用</a>
+        
+        </div>
+    </div>
+
+    <!-- ===== 弹出目录 (抽屉) ===== -->
+    <div class="drawer-overlay" id="drawerOverlay">
+        <div class="drawer-card">
+            <div class="close-drawer" id="closeDrawerBtn">✕</div>
+            <h2>· 选 章 ·</h2>
+            <div class="drawer-grid" id="drawerGrid">
+                <!-- 动态生成按钮 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- 配置 ----------
+        const START_AUDIO_INDEX = 289;
+        const END_AUDIO_INDEX = 339;
+        const TOTAL_CHAPTERS = END_AUDIO_INDEX - START_AUDIO_INDEX + 1;  // 51
+
+        const CHAPTER_HTML_PATH = 'chapters/';
+
+        function padChapterNumber(num) {
+            return num.toString().padStart(3, '0');
+        }
+
+        // DOM 元素
+        const audio = document.getElementById('audio');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const chapterDisplayTitle = document.getElementById('chapterDisplayTitle');
+        const chapterContentDiv = document.getElementById('chapterContent');
+
+        // 弹出层相关
+        const drawerOverlay = document.getElementById('drawerOverlay');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+        const drawerGrid = document.getElementById('drawerGrid');
+
+        let currentChapterIndex = 0;   // 0-based
+        const contentCache = {};
+
+        // ---------- 生成弹出层内的按钮 ----------
+        function buildDrawerButtons() {
+            drawerGrid.innerHTML = '';
+            for (let i = 0; i < TOTAL_CHAPTERS; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'chapter-btn';
+                btn.textContent = i + 1;
+                btn.dataset.index = i;
+                btn.dataset.audioIndex = START_AUDIO_INDEX + i;
+
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.currentTarget.dataset.index);
+                    loadChapter(idx);
+                    closeDrawer();               // 选完自动关闭抽屉
+                });
+
+                drawerGrid.appendChild(btn);
+            }
+        }
+
+        // 更新所有按钮的激活状态 (包括弹出层内的)
+        function updateActiveButton(index) {
+            document.querySelectorAll('.chapter-btn').forEach((btn, i) => {
+                if (i === index) btn.classList.add('active-chapter');
+                else btn.classList.remove('active-chapter');
+            });
+        }
+
+        // ---------- 打开/关闭抽屉 ----------
+        function openDrawer() {
+            drawerOverlay.classList.add('show');
+        }
+
+        function closeDrawer() {
+            drawerOverlay.classList.remove('show');
+        }
+
+        menuBtn.addEventListener('click', openDrawer);
+        closeDrawerBtn.addEventListener('click', closeDrawer);
+        // 点击遮罩本身也可以关闭
+        drawerOverlay.addEventListener('click', (e) => {
+            if (e.target === drawerOverlay) closeDrawer();
+        });
+
+        // ---------- 加载内容 (与之前相同) ----------
+        async function fetchChapterContent(chapterIndex) {
+            const chapNumber = chapterIndex + 1;
+            const padded = padChapterNumber(chapNumber);
+            const filePath = `${CHAPTER_HTML_PATH}chap${padded}.html`;
+
+            if (contentCache[chapterIndex]) {
+                return contentCache[chapterIndex];
+            }
+
+            try {
+                const response = await fetch(filePath);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                let html = await response.text();
+                contentCache[chapterIndex] = html;
+                return html;
+            } catch (error) {
+                console.warn(`加载失败: ${filePath}`, error);
+                return getFallbackContent(chapterIndex);
+            }
+        }
+
+        // 后备内容 (完整第一章+第二章，其余占位)
+        function getFallbackContent(index) {
+            const chapNum = index + 1;
+            if (index === 0) {
+                return `第一章 序说<br><br>我们要想了解一个宗教的内容，以及一个宗教是否为我们人生所需要，则我们一定先要了解一个宗教的教主。他的人格、智能，是否值得我们崇拜信奉？以及我们崇拜信奉了他，他是否真能指示我们解脱人生的烦恼痛苦？我想：这是我们信仰宗教首先需要知道的课题。<br><br>因为我们信仰宗教，不单是暂时求得精神上的寄托，心灵上的安慰，而最高的目的是了生脱死，离苦得乐。所以，当我们信仰宗教的时候，就要首先知道他的教主是否有历史的可考？人格是否已臻完美之境？自性是否已经清净？本身是否已经解脱？这些问题，都不容许我们忽视的。<br><br>佛教教主释迦牟尼佛，出生在纪元前四六四年的四月八日，降诞的地点就是被称为世界四大文化古国之一的印度，这是在中外历史上均有记载的。所以，我们决不可以把佛陀看作是来去无影无踪的神仙，也不可以把他视为是玄想出来的上帝。他有出生的时间、地点，更有生养他的父母，他经过了多年茹苦含辛的修行终究完成一位大智大觉的完人！这是中外的学者、宗教家，所一致公认的。<br><br>释迦牟尼佛出生在人间，生长在人间，成佛亦在人间。他是我们长夜漫漫的人间慧灯，他是我们苦海茫茫的人间舟航。他的人格已经到达最完美的境地，他的自性已是清净不染，他解脱了世间上一切束缚烦恼，他己经远离了人生的生死痛苦。他住世说法四十余年，告诉我们求得解脱的方法，指示我们应行的大道。他所留在这人间的佛法，无一不是从他大智觉海中流露出来，无一不是我们离苦得乐的方法。<br><br>我们皈投在佛教的怀抱之中，既可以把佛教当一种宗教来信仰，也可以把佛教当一种学术来研究。同时，创立佛教的教主释迦牟尼佛，更可以作我们每一个人做人的最高模范。<br><br>救世主释迦牟尼佛是世间上最崇高伟大的圣者，佛教是世界上最博大精深的宗教。佛教流传至今日，虽然已遍及全球，但遗憾的是宣扬圣教的教徒，都重在玄谈，而忽略了佛陀应化在世间上的精神。理论超过现实，都没有体会到佛陀住世的本怀。唯有发扬佛陀觉人救世的精神，佛教才能更令人有所敬仰，有所效法。<br><br>`;
+            } else if (index === 1) {
+                return `第二章 佛陀住世时的印度社会<br><br>很多人都以为今日学佛的人，是逃避现实，消极厌世，这实在是误解了学佛的本义。佛陀所以出家修道成佛，一方面当然是为了解救自己生死苦恼的问题，但另一方面是为了救济被压迫的人民。我们如果知道救主释迦牟尼佛住世奋斗的经过，一定就会明白他实在是一位伟大的慈悲的革命者。<br><br>他革命的对象：一是阶级森严的印度社会，二是没有究竟真理的神权宗教，三是生死循环不已的自私小我。<br><br>讲到革命问题，世界上伟大的革命者其数虽多，但那些革命与佛陀的革命精神，实有天地的悬殊。<br><br>一般的革命家，虽然标榜着为民的口号，但人民并不因此而得到幸福，因为他们革命是源于瞋恨敌人，所以用出的革命手段都很残忍。唯有佛陀的革命，完全是由于慈悲心肠的激发，他的革命是用慈悲覆护一切，感化一切，他不用暴力，行的是不流血的革命，这才是真正的革命。<br><br>一般的革命家，大都是由下而上的。他因为感到自身的不自由，不安乐，而才联想到别人的不自由、不安乐，所以就起来推翻不合理的势力。唯有我们的教主佛陀，他的革命是由上而下的，他本是贵为王子之尊，过着优裕的生活，照理他是用不着甚么革命的，但他看到很多遭受压迫的民众，为了公理与正义，他不能不摆脱王子的虚荣，用一切众生平等的真理来为那些被压迫的可怜的人们代抱不平。<br><br>一般的革命者，都是向外革命而没有向内革命，说明白一点就是向别人革命而没有向自己革命。唯有我们的教主佛陀，他知道每个人都有一个自私的小我，都有生死之源的烦恼无明，为了求得真正自由自在的解脱，他不得不向五欲荣华富贵革命，舍离一切的爱染，去过平实的生活，这才是究竟的革命。<br><br>讲到佛陀革命的对象，第一就得先要了解当时印度社会的组织，第二要了解当时印度的宗教和思想界，第三要了解自私小我的可怖！关于当时印度的宗教和思想界，在次章会说明；向自私小我革命，这在本传里处处都会说到，现在先来叙述当时印度社会的组织。<br><br>原来，在三千年前的印度社会，因为职业的分化和种族尊卑的观念，形成了征服者与被征服者的关系。虽然同是征服者，却又有贵族与平民的划分；被征服者，那就是被公认的贱族，他们就是遭受歧视和压迫的所谓奴隶。<br><br>征服者的第一阶级是婆罗门，这就是古印度的宗教徒，他们为了维持自身的权利，和巩固在社会上的崇高地位，把印度的社会分成四个阶级，他们自己列在第一。他们的权威、横暴，都靠了一卷《摩奴法典》，其它阶级的种族，要无条件的信奉和接受。<br><br>由于印度当时产生了这一种特殊的阶级，素来游牧人民那悠悠春梦似的生活，像在碧绿海水上飘浮的小船被击沉了。婆罗门用卑下的仪式、祭礼、梵咒，像枷锁似的束縳了五印的人民。<br><br>第二个阶级是剎帝利，这就是与婆罗门同样被尊敬着的王族。这些王族，就和我国当初封建制度下群雄割据的时代类似。<br><br>自古的国王，都是世袭家的天下，国家的土地、财宝，都好象是王族的私有品，别的人民都好象为他们服劳役而生的，印度当然也不会例外。<br><br>第三阶级是吠舍，这在我国就是所谓农工商的阶级，他们受婆罗门和剎帝利权势所压迫，连受普通教育的资格都没有，那是多么的可怜！<br><br>第四阶级是首陀罗，他们是被征服者，他们被公认是为了使役奴隶而生到这世间来的。婆罗门说他们是初到人间来受生，是一种最下贱的人。在婆罗门金科玉律的《摩奴法典》里第八章第二百七十节、及二百七十二节就有这样的记载：‘初生的人就是首陀罗，假若他们以骂詈的语言侮辱再生的人，那就要断他们的舌头；假若他们举再生人的名或姓出来侮辱，那就要用烧红的铁针插进他的口中；假若婆罗门的指示他不接受，那王者就可以命令用热油灌入他的耳里或口中。’从这里就可以看出首陀罗地位的低落和生活的悲惨！<br><br>这以上就是印度当时的社会状态。农工商以及当地的土人，在婆罗门和剎帝利的支配压制之下，心中的怀恨是不难想象的。<br><br>教主释迦牟尼佛，就是出生在这样一个阶级悬殊的社会里，他自己虽是剎帝利的王族，但他并不想用剎帝利的权威去统治人民，压迫人民。相反的，他用慈悲平等的真理，毅然的向阶级森严的社会宣战。关于这个事实，后来到他成道时就有证明，他在菩提树下初成正觉的时候，就发出了‘大地众生皆有如来智能德相’的平等主张，后来又有‘四姓出家，同为释氏’的四海皆兄弟的宣言，佛陀慈悲平等的主义，终于给数千年来被奴役的印度人民带来了光明。<br><br>优波离本是一个首陀罗族中的剃头匠，后来在佛陀的弟子中被奉为是十大弟子之一；摩登伽女是首陀罗族中的一名贱女，她为了爱恋阿难的美貌，受佛陀的感化而即刻证得阿罗汉果。由于这些事实证明，旧有的阶级社会，不得不在佛陀大慈悲真平等的主义下失去统制者的力量！<br><br>`;
+            } else {
+                return `第${chapNum}章 内容占位<br><br>未能加载外部文件 <code>${CHAPTER_HTML_PATH}chap${padChapterNumber(chapNum)}.html</code> 。<br><br>当前显示为后备占位。<br><br>`;
+            }
+        }
+
+        async function loadChapter(index) {
+            if (index < 0 || index >= TOTAL_CHAPTERS) return;
+
+            currentChapterIndex = index;
+
+            // 更新按钮激活样式（包括弹出层里的）
+            updateActiveButton(index);
+
+            const audioFileNum = START_AUDIO_INDEX + index;
+            audio.src = `m4as/${audioFileNum}.m4a`;
+            audio.play().catch(e => console.log('autoplay需交互'));
+
+            const displayChapNum = index + 1;
+            let subTitle = (index === 0) ? '序说' : (index === 1) ? '佛陀住世时的印度社会' : '';
+            chapterDisplayTitle.textContent = `第${displayChapNum}章 ${subTitle}`;
+
+            chapterContentDiv.innerHTML = `<div class="loading-indicator">📖 加载第${displayChapNum}章 ...</div>`;
+
+            try {
+                const contentHtml = await fetchChapterContent(index);
+                chapterContentDiv.innerHTML = contentHtml;
+            } catch (e) {
+                chapterContentDiv.innerHTML = getFallbackContent(index);
+            }
+        }
+
+        function goPrev() { if (currentChapterIndex > 0) loadChapter(currentChapterIndex - 1); else alert('已是第一章'); }
+        function goNext() { if (currentChapterIndex < TOTAL_CHAPTERS - 1) loadChapter(currentChapterIndex + 1); else alert('已是最后一章'); }
+
+        audio.addEventListener('ended', () => { if (currentChapterIndex < TOTAL_CHAPTERS - 1) loadChapter(currentChapterIndex + 1); });
+        prevBtn.addEventListener('click', goPrev);
+        nextBtn.addEventListener('click', goNext);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') { goPrev(); e.preventDefault(); }
+            else if (e.key === 'ArrowRight') { goNext(); e.preventDefault(); }
+        });
+
+        // 初始化
+        buildDrawerButtons();      // 生成弹出层内按钮
+        // 首次加载第一章，同时按钮激活
+        loadChapter(0);
+
+        // 注意：按钮激活样式在loadChapter里会调用updateActiveButton
+    })();
+</script>
+</body>
+</html>

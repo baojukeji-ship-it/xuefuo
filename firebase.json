@@ -1,0 +1,30 @@
+{
+  "hosting": [
+    {
+      "site": "xuefuo-34977",
+      "public": "public",
+      "redirects": [
+        {
+          "source": "/**",
+          "destination": "https://xuefuo.web.app",
+          "type": 301
+        }
+      ]
+    },
+    {
+      "site": "xuefuo",
+      "public": "public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
+}
